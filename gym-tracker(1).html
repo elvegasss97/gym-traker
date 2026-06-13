@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-title" content="Gym"/>
+  <meta name="theme-color" content="#0F0F0F"/>
+  <title>Gym Tracker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; background: #0F0F0F; }
+    body { color: #F5F5F5; font-family: 'Space Grotesk', sans-serif; max-width: 480px; margin: 0 auto; overflow-x: hidden; }
+    #root { min-height: 100vh; }
+    .app { display: flex; flex-direction: column; min-height: 100vh; }
+    .screen { flex: 1; padding: 0 0 80px 0; overflow-y: auto; }
+    .nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 480px; background: #1A1A1A; border-top: 1px solid #2E2E2E; display: flex; z-index: 100; padding-bottom: env(safe-area-inset-bottom); }
+    .nav-btn { flex: 1; padding: 12px 0 14px; background: none; border: none; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; color: #777; font-family: 'Space Grotesk', sans-serif; font-size: 10px; font-weight: 500; letter-spacing: 0.05em; text-transform: uppercase; transition: color 0.15s; -webkit-tap-highlight-color: transparent; }
+    .nav-btn.active { color: #C8FF00; }
+    .nav-btn svg { width: 20px; height: 20px; }
+    .header { padding: 52px 20px 20px; display: flex; align-items: flex-end; justify-content: space-between; }
+    .header-title { font-size: 26px; font-weight: 700; letter-spacing: -0.5px; }
+    .header-sub { font-size: 13px; color: #777; margin-top: 2px; }
+    .header-day { font-family: 'Space Mono', monospace; font-size: 11px; color: #C8FF00; background: rgba(200,255,0,0.08); border: 1px solid rgba(200,255,0,0.2); padding: 4px 10px; border-radius: 20px; }
+    .card { background: #1A1A1A; border: 1px solid #2E2E2E; border-radius: 16px; margin: 0 16px 12px; overflow: hidden; }
+    .card-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 16px 12px; cursor: pointer; }
+    .card-title { font-size: 15px; font-weight: 600; }
+    .card-badge { font-size: 11px; font-weight: 500; background: #242424; border: 1px solid #2E2E2E; padding: 3px 8px; border-radius: 20px; color: #777; }
+    .ex-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-top: 1px solid #2E2E2E; cursor: pointer; }
+    .ex-name { font-size: 14px; font-weight: 500; }
+    .ex-meta { font-size: 12px; color: #777; margin-top: 2px; }
+    .ex-best { font-family: 'Space Mono', monospace; font-size: 18px; font-weight: 700; color: #C8FF00; }
+    .ex-best-label { font-size: 10px; color: #777; text-align: right; }
+    .set-row { display: flex; align-items: center; gap: 8px; padding: 8px 16px; border-top: 1px solid #2E2E2E; }
+    .set-num { font-family: 'Space Mono', monospace; font-size: 11px; color: #777; width: 20px; flex-shrink: 0; }
+    .set-input { flex: 1; background: #242424; border: 1px solid #2E2E2E; border-radius: 10px; padding: 10px 12px; color: #F5F5F5; font-family: 'Space Mono', monospace; font-size: 16px; text-align: center; outline: none; -webkit-appearance: none; }
+    .set-input:focus { border-color: #C8FF00; }
+    .set-input::placeholder { color: #777; font-size: 13px; }
+    .set-sep { font-size: 12px; color: #777; flex-shrink: 0; }
+    .delta { font-size: 11px; font-weight: 600; font-family: 'Space Mono', monospace; padding: 2px 7px; border-radius: 20px; flex-shrink: 0; min-width: 48px; text-align: center; }
+    .delta-up { background: rgba(200,255,0,0.12); color: #C8FF00; }
+    .delta-eq { background: #242424; color: #777; }
+    .delta-new { background: rgba(200,255,0,0.06); color: #8FB800; }
+    .btn { display: flex; align-items: center; justify-content: center; gap: 6px; border: none; border-radius: 12px; cursor: pointer; font-family: 'Space Grotesk', sans-serif; font-weight: 600; transition: transform 0.1s; -webkit-tap-highlight-color: transparent; }
+    .btn:active { transform: scale(0.97); }
+    .btn-primary { background: #C8FF00; color: #0F0F0F; padding: 14px 20px; font-size: 14px; width: 100%; }
+    .btn-ghost { background: transparent; color: #777; padding: 10px 16px; font-size: 13px; border: 1px solid #2E2E2E; }
+    .btn-icon { background: #242424; color: #F5F5F5; width: 36px; height: 36px; border-radius: 10px; flex-shrink: 0; font-size: 18px; }
+    .btn-danger { background: rgba(255,68,68,0.1); color: #FF4444; border: 1px solid rgba(255,68,68,0.2); }
+    .action-row { display: flex; gap: 8px; padding: 12px 16px 16px; }
+    .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 16px 12px; }
+    .stat-box { background: #1A1A1A; border: 1px solid #2E2E2E; border-radius: 14px; padding: 16px; }
+    .stat-val { font-family: 'Space Mono', monospace; font-size: 28px; font-weight: 700; color: #C8FF00; line-height: 1; }
+    .stat-label { font-size: 11px; color: #777; margin-top: 6px; text-transform: uppercase; letter-spacing: 0.06em; }
+    .chart-wrap { padding: 0 16px 12px; }
+    .chart-bar-row { display: flex; align-items: flex-end; gap: 4px; height: 80px; margin-bottom: 8px; }
+    .chart-bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+    .chart-bar { width: 100%; border-radius: 4px 4px 0 0; background: #242424; min-height: 4px; }
+    .chart-bar-peak { background: #C8FF00; }
+    .chart-bar-swim { background: #5BB8FF; }
+    .chart-date { font-size: 9px; color: #777; font-family: 'Space Mono', monospace; }
+    .day-tab-row { display: flex; gap: 6px; padding: 0 16px 16px; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+    .day-tab-row::-webkit-scrollbar { display: none; }
+    .day-tab { flex-shrink: 0; padding: 8px 16px; border-radius: 20px; font-size: 13px; font-weight: 600; cursor: pointer; border: 1px solid #2E2E2E; background: #1A1A1A; color: #777; -webkit-tap-highlight-color: transparent; }
+    .day-tab-active { background: #C8FF00 !important; color: #0F0F0F !important; border-color: #C8FF00 !important; }
+    .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.75); display: flex; align-items: flex-end; z-index: 200; }
+    .modal { background: #1A1A1A; border: 1px solid #2E2E2E; border-radius: 24px 24px 0 0; width: 100%; max-width: 480px; margin: 0 auto; padding: 24px 20px 40px; }
+    .modal-handle { width: 40px; height: 4px; background: #2E2E2E; border-radius: 2px; margin: 0 auto 20px; }
+    .modal-title { font-size: 18px; font-weight: 700; margin-bottom: 16px; }
+    .input-field { width: 100%; background: #242424; border: 1px solid #2E2E2E; border-radius: 12px; padding: 14px 16px; color: #F5F5F5; font-family: 'Space Grotesk', sans-serif; font-size: 15px; outline: none; margin-bottom: 10px; -webkit-appearance: none; }
+    .input-field:focus { border-color: #C8FF00; }
+    .input-field::placeholder { color: #777; }
+    .toast { position: fixed; top: 60px; left: 50%; transform: translateX(-50%); background: #C8FF00; color: #0F0F0F; padding: 10px 20px; border-radius: 20px; font-size: 13px; font-weight: 700; z-index: 300; white-space: nowrap; pointer-events: none; }
+    .empty { text-align: center; padding: 48px 32px; color: #777; font-size: 14px; line-height: 1.6; }
+    .empty-icon { font-size: 40px; margin-bottom: 12px; }
+    .empty-title { font-size: 16px; font-weight: 600; color: #F5F5F5; margin-bottom: 6px; }
+    .complete-banner { margin: 0 16px 16px; background: rgba(200,255,0,0.08); border: 1px solid rgba(200,255,0,0.25); border-radius: 14px; padding: 16px; display: flex; align-items: center; gap: 12px; }
+    .complete-title { font-size: 15px; font-weight: 700; color: #C8FF00; }
+    .complete-sub { font-size: 12px; color: #777; margin-top: 2px; }
+    .section-label { font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #777; padding: 8px 20px; }
+    .pill-row { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 16px 12px; }
+    .pill { padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 500; background: #242424; border: 1px solid #2E2E2E; color: #777; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+    .pill-active { background: rgba(200,255,0,0.1) !important; border-color: #C8FF00 !important; color: #C8FF00 !important; }
+    .swim-card { margin: 0 16px 12px; background: rgba(0,150,255,0.06); border: 1px solid rgba(0,150,255,0.2); border-radius: 16px; padding: 20px; }
+    .swim-title { font-size: 17px; font-weight: 700; color: #5BB8FF; margin-bottom: 2px; }
+    .tip-inner { padding: 10px 16px 12px; background: #1E1E1E; border-top: 1px solid #2E2E2E; }
+    .tip-label { font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #C8FF00; margin-bottom: 4px; }
+    .tip-text { font-size: 13px; color: #777; line-height: 1.5; }
+    .week-row { display: flex; gap: 5px; padding: 0 16px 16px; }
+    .week-day { flex: 1; border-radius: 12px; padding: 10px 2px; text-align: center; background: #1A1A1A; border: 1px solid #2E2E2E; }
+    .week-day-today { border-color: #C8FF00 !important; background: rgba(200,255,0,0.06) !important; }
+    .week-day-swim { border-color: rgba(0,150,255,0.3) !important; background: rgba(0,150,255,0.06) !important; }
+    .week-day-name { font-size: 8px; color: #777; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 5px; }
+    .week-day-icon { font-size: 14px; }
+    .week-day-label { font-size: 7px; color: #555; margin-top: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .prev-session { padding: 8px 16px; background: #1E1E1E; border-top: 1px solid #2E2E2E; }
+    .prev-label { font-size: 11px; color: #777; margin-bottom: 4px; }
+    .prev-sets { display: flex; gap: 8px; flex-wrap: wrap; }
+    .prev-set { font-family: 'Space Mono', monospace; font-size: 12px; color: #555; }
+    .boya-counter { display: flex; align-items: center; justify-content: space-between; background: rgba(0,150,255,0.08); border-radius: 14px; padding: 16px 20px; margin-bottom: 12px; }
+    .boya-btn { width: 48px; height: 48px; border-radius: 12px; background: rgba(0,150,255,0.15); border: 1px solid rgba(0,150,255,0.35); color: #5BB8FF; font-size: 26px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: 700; -webkit-tap-highlight-color: transparent; user-select: none; }
+    .boya-btn:active { transform: scale(0.93); }
+    .boya-num { font-family: 'Space Mono', monospace; font-size: 56px; font-weight: 700; color: #5BB8FF; line-height: 1; }
+    .boya-sub { font-size: 11px; color: #777; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.08em; }
+    .dist-row { display: flex; gap: 8px; margin-bottom: 12px; }
+    .dist-box { flex: 1; background: rgba(0,150,255,0.05); border: 1px solid rgba(0,150,255,0.12); border-radius: 12px; padding: 10px 12px; text-align: center; }
+    .dist-val { font-family: 'Space Mono', monospace; font-size: 20px; font-weight: 700; color: #5BB8FF; }
+    .dist-label { font-size: 10px; color: #777; margin-top: 2px; text-transform: uppercase; letter-spacing: 0.06em; }
+    .swim-hist { margin-top: 4px; }
+    .swim-hist-label { font-size: 10px; color: #555; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; }
+    .swim-hist-row { display: flex; gap: 6px; }
+    .swim-hist-item { flex: 1; background: rgba(0,0,0,0.25); border-radius: 10px; padding: 8px 4px; text-align: center; }
+    .swim-hist-val { font-family: 'Space Mono', monospace; font-size: 16px; font-weight: 700; color: #5BB8FF; }
+    .swim-hist-date { font-size: 9px; color: #555; margin-top: 2px; }
+  </style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useRef } = React;
+
+const DEFAULT_ROUTINES = [
+  {
+    id:"r1", name:"Push — Empuje", days:["Domingo","Jueves"],
+    exercises:[
+      {id:"e1",name:"Press Banca Mancuernas",sets:4,reps:8,muscleGroup:"Pecho",tip:"Escápulas juntas, pies en el suelo. Las mancuernas permiten más rango. No arquees la lumbar."},
+      {id:"e2",name:"Press Inclinado Mancuernas",sets:3,reps:10,muscleGroup:"Pecho",tip:"45°, controlado en la bajada. Siente el pecho en la subida."},
+      {id:"e3",name:"Press Militar Mancuernas",sets:4,reps:8,muscleGroup:"Hombro",tip:"Sentado con respaldo. Menos carga en lumbar que de pie."},
+      {id:"e4",name:"Elevaciones Laterales",sets:3,reps:15,muscleGroup:"Hombro",tip:"Peso ligero, codo ligeramente flexionado. Sin balanceo."},
+      {id:"e5",name:"Tríceps Polea Alta",sets:3,reps:12,muscleGroup:"Tríceps",tip:"Codos pegados al cuerpo. Bloquea arriba un segundo."},
+      {id:"e6",name:"Plancha",sets:3,reps:45,muscleGroup:"Core",tip:"45 seg. Glúteos apretados, lumbar neutra. Imprescindible para ti."},
+    ]
+  },
+  {
+    id:"r2", name:"Pull — Tirón", days:["Martes"],
+    exercises:[
+      {id:"e7",name:"Jalón al Pecho Polea",sets:4,reps:10,muscleGroup:"Espalda",tip:"Agarre ancho. Lleva la barra al pecho, no a la cara."},
+      {id:"e8",name:"Remo Polea Baja",sets:4,reps:10,muscleGroup:"Espalda",tip:"Espalda recta, no te inclines hacia atrás. Más seguro que remo barra."},
+      {id:"e9",name:"Curl Bíceps Mancuernas",sets:3,reps:12,muscleGroup:"Bíceps",tip:"Codo fijo. Supina la muñeca arriba."},
+      {id:"e10",name:"Face Pulls Polea",sets:3,reps:15,muscleGroup:"Hombro Post.",tip:"Clave para salud de hombros y postura. No te lo saltes."},
+      {id:"e11",name:"Bird-Dog",sets:3,reps:12,muscleGroup:"Core",tip:"12 reps por lado. Lento y controlado. Protege tu lumbar."},
+    ]
+  },
+  {
+    id:"r3", name:"Legs — Piernas", days:["Viernes"],
+    exercises:[
+      {id:"e12",name:"Prensa",sets:4,reps:10,muscleGroup:"Cuádriceps",tip:"Pies a la anchura de hombros. No bloquees rodillas arriba."},
+      {id:"e13",name:"Peso Muerto Rumano",sets:4,reps:10,muscleGroup:"Isquiotibiales",tip:"Con mancuernas, espalda neutra. Bajas hasta el estiramiento, no más."},
+      {id:"e14",name:"Zancadas Mancuernas",sets:3,reps:12,muscleGroup:"Glúteos",tip:"12 por pierna. Torso erguido, rodilla sin pasar el pie."},
+      {id:"e15",name:"Curl Femoral Máquina",sets:3,reps:12,muscleGroup:"Isquiotibiales",tip:"Movimiento controlado, sin impulso."},
+      {id:"e16",name:"Pantorrillas de Pie",sets:4,reps:20,muscleGroup:"Gemelos",tip:"Rango completo, pausa arriba."},
+      {id:"e17",name:"Dead Bug",sets:3,reps:10,muscleGroup:"Core",tip:"10 por lado. Lumbar pegada al suelo siempre."},
+    ]
+  },
+  {
+    id:"r4", name:"Upper — Tren Superior", days:["Sábado"],
+    exercises:[
+      {id:"e18",name:"Press Banca Mancuernas",sets:3,reps:12,muscleGroup:"Pecho",tip:"Día de volumen ligero. Más reps, menos peso."},
+      {id:"e19",name:"Remo Mancuerna 1 Brazo",sets:3,reps:12,muscleGroup:"Espalda",tip:"Apoya rodilla y mano en el banco. Lumbar recta."},
+      {id:"e20",name:"Elevaciones Laterales",sets:3,reps:15,muscleGroup:"Hombro",tip:"Mantenimiento. Peso ligero."},
+      {id:"e21",name:"Curl + Tríceps Superserie",sets:3,reps:12,muscleGroup:"Brazos",tip:"Sin descanso entre curl y tríceps. Luego descansas 90 seg."},
+      {id:"e22",name:"Plancha Lateral",sets:3,reps:30,muscleGroup:"Core",tip:"30 seg por lado. Refuerza el core lateral."},
+    ]
+  },
+];
+
+const SWIM_DAYS = ["Lunes","Miércoles"];
+const DAYS_ES = ["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"];
+const DAYS_SHORT = ["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"];
+const BOYA_M = 100;
+const todayName = () => DAYS_ES[new Date().getDay()];
+const dateKey = () => new Date().toISOString().split("T")[0];
+
+function useLS(key, init) {
+  const [v, setV] = useState(() => { try { const s = localStorage.getItem(key); return s ? JSON.parse(s) : init; } catch { return init; } });
+  const save = n => { setV(n); try { localStorage.setItem(key, JSON.stringify(n)); } catch {} };
+  return [v, save];
+}
+
+function getBest(logs, id) {
+  let best = null;
+  for (const s of Object.values(logs)) { const sets = s[id]; if (!sets) continue; for (const x of sets) { const kg=parseFloat(x.kg),r=parseInt(x.reps); if(!isNaN(kg)&&!isNaN(r)&&(!best||kg*r>best.val)) best={kg,reps:r,val:kg*r}; } }
+  return best;
+}
+function getLast(logs, id) {
+  for (const d of Object.keys(logs).sort().reverse()) { if (logs[d][id]) return logs[d][id]; }
+  return null;
+}
+function getHistory(logs, id) {
+  return Object.keys(logs).sort().map(date => { const sets=logs[date][id]; if(!sets) return null; let m=0; for(const s of sets){const k=parseFloat(s.kg);if(k>m)m=k;} return m>0?{date,kg:m}:null; }).filter(Boolean).slice(-8);
+}
+
+const IcoToday = () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>;
+const IcoRut = () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 4v16M18 4v16M3 8h4M17 8h4M3 16h4M17 16h4M7 12h10"/></svg>;
+const IcoStats = () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>;
+const IcoPlus = () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>;
+const IcoTrash = () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{width:14,height:14}}><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>;
+
+function SetRow({idx, set, onChange, prev}) {
+  const kg=parseFloat(set.kg), reps=parseInt(set.reps);
+  const pk=prev?parseFloat(prev.kg):null, pr=prev?parseInt(prev.reps):null;
+  let delta = null;
+  if(!isNaN(kg)&&!isNaN(reps)&&pk!==null&&pr!==null){
+    const diff=Math.round((kg*(1+reps/30)-pk*(1+pr/30))*10)/10;
+    delta = diff>0 ? <span className="delta delta-up">▲+{diff>10?Math.round(diff):diff}</span> : <span className="delta delta-eq">=</span>;
+  } else if(!isNaN(kg)&&!isNaN(reps)&&pk===null){
+    delta=<span className="delta delta-new">NEW</span>;
+  }
+  return (
+    <div className="set-row">
+      <span className="set-num">{idx+1}</span>
+      <input className="set-input" type="number" inputMode="decimal" placeholder="kg" value={set.kg} onChange={e=>onChange({...set,kg:e.target.value})}/>
+      <span className="set-sep">x</span>
+      <input className="set-input" type="number" inputMode="numeric" placeholder="reps" value={set.reps} onChange={e=>onChange({...set,reps:e.target.value})}/>
+      {delta}
+    </div>
+  );
+}
+
+function ExCard({exercise, sessionSets, onUpdate, logs}) {
+  const [open, setOpen] = useState(false);
+  const sets = sessionSets || [];
+  const last = getLast(logs, exercise.id);
+  const best = getBest(logs, exercise.id);
+  const add = () => onUpdate([...sets,{kg:"",reps:""}]);
+  const upd = (i,s) => { const n=[...sets]; n[i]=s; onUpdate(n); };
+  return (
+    <div className="card">
+      <div className="card-header" onClick={()=>setOpen(!open)}>
+        <div>
+          <div className="card-title">{exercise.name}</div>
+          <div className="ex-meta">{exercise.muscleGroup} · {exercise.sets}x{exercise.reps}</div>
+        </div>
+        <div style={{textAlign:"right"}}>
+          {best ? <><div className="ex-best">{best.kg}<span style={{fontSize:12,color:"#777"}}> kg</span></div><div className="ex-best-label">mejor</div></> : <span className="card-badge">{sets.length}/{exercise.sets}</span>}
+        </div>
+      </div>
+      {open && <>
+        {exercise.tip && <div className="tip-inner"><div className="tip-label">Tecnica</div><div className="tip-text">{exercise.tip}</div></div>}
+        {last && <div className="prev-session"><div className="prev-label">Ultima sesion</div><div className="prev-sets">{last.map((s,i)=><span key={i} className="prev-set">{s.kg}kgx{s.reps}</span>)}</div></div>}
+        {sets.map((s,i)=><SetRow key={i} idx={i} set={s} onChange={ns=>upd(i,ns)} prev={last?last[i]:null}/>)}
+        <div className="action-row"><button className="btn btn-ghost" style={{flex:1}} onClick={add}>+ serie</button></div>
+      </>}
+    </div>
+  );
+}
+
+function SwimCard({swimLogs, onSwimLog}) {
+  const today = dateKey();
+  const boyas = swimLogs[today] || 0;
+  const dist = boyas * BOYA_M * 2;
+  const lastDates = Object.keys(swimLogs).sort().reverse().filter(d=>d!==today).slice(0,3);
+  const inc = () => onSwimLog({...swimLogs,[today]:boyas+1});
+  const dec = () => { if(boyas>0) onSwimLog({...swimLogs,[today]:boyas-1}); };
+  return (
+    <div className="swim-card">
+      <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:16}}>
+        <span style={{fontSize:28}}>🏊</span>
+        <div>
+          <div className="swim-title">Natacion · Torre del Mar</div>
+          <div style={{fontSize:12,color:"#777",marginTop:1}}>~{BOYA_M}m por boya · ida y vuelta</div>
+        </div>
+      </div>
+      <div className="boya-counter">
+        <button className="boya-btn" onClick={dec}>-</button>
+        <div style={{textAlign:"center"}}>
+          <div className="boya-num">{boyas}</div>
+          <div className="boya-sub">boyas</div>
+        </div>
+        <button className="boya-btn" onClick={inc}>+</button>
+      </div>
+      {boyas > 0 && (
+        <div className="dist-row">
+          <div className="dist-box">
+            <div className="dist-val">{dist}m</div>
+            <div className="dist-label">distancia</div>
+          </div>
+          {dist >= 1000 && <div className="dist-box">
+            <div className="dist-val">{(dist/1000).toFixed(1)}km</div>
+            <div className="dist-label">kilometros</div>
+          </div>}
+          <div className="dist-box">
+            <div className="dist-val">{Math.round(dist/25)}</div>
+            <div className="dist-label">largos piscina</div>
+          </div>
+        </div>
+      )}
+      {lastDates.length > 0 && (
+        <div className="swim-hist">
+          <div className="swim-hist-label">Sesiones anteriores</div>
+          <div className="swim-hist-row">
+            {lastDates.map(d=>(
+              <div key={d} className="swim-hist-item">
+                <div className="swim-hist-val">{swimLogs[d]}</div>
+                <div style={{fontSize:9,color:"#555",marginTop:2}}>{swimLogs[d]*BOYA_M*2}m</div>
+                <div className="swim-hist-date">{d.slice(5)}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function WeekView({routines}) {
+  const today = todayName();
+  return (
+    <div className="week-row">
+      {DAYS_ES.map((full,i)=>{
+        const isToday=full===today;
+        const isSwim=SWIM_DAYS.includes(full);
+        const gym=routines.find(r=>r.days.includes(full));
+        let cls="week-day";
+        if(isToday) cls+=" week-day-today";
+        else if(isSwim&&!gym) cls+=" week-day-swim";
+        return (
+          <div key={i} className={cls}>
+            <div className="week-day-name" style={isToday?{color:"#C8FF00"}:{}}>{DAYS_SHORT[i]}</div>
+            <div className="week-day-icon">{gym?"🏋️":isSwim?"🏊":"😴"}</div>
+            <div className="week-day-label" style={isToday?{color:"#C8FF00"}:(isSwim&&!gym)?{color:"#5BB8FF"}:{color:"#555"}}>
+              {gym?gym.name.split("—")[0].trim():isSwim?"Mar":"Rest"}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function TodayScreen({routines,logs,onLogUpdate,swimLogs,onSwimLog}) {
+  const today=todayName();
+  const isSwim=SWIM_DAYS.includes(today)&&!routines.find(r=>r.days.includes(today));
+  const routine=routines.find(r=>r.days.includes(today));
+  const todayLog=logs[dateKey()]||{};
+  const upd=(id,sets)=>onLogUpdate({...logs,[dateKey()]:{...todayLog,[id]:sets}});
+  const total=routine?routine.exercises.reduce((a,e)=>a+(todayLog[e.id]?.length||0),0):0;
+  const expected=routine?routine.exercises.reduce((a,e)=>a+e.sets,0):0;
+  return (
+    <div>
+      <div className="header">
+        <div><div className="header-title">{routine?routine.name:isSwim?"Natacion":"Descanso"}</div><div className="header-sub">{today}{routine?` · ${total}/${expected} series`:""}</div></div>
+        <span className="header-day">{today.slice(0,3).toUpperCase()}</span>
+      </div>
+      <WeekView routines={routines}/>
+      {isSwim && <SwimCard swimLogs={swimLogs} onSwimLog={onSwimLog}/>}
+      {!routine&&!isSwim&&<div className="empty"><div className="empty-icon">😴</div><div className="empty-title">Descanso</div>Deja que el cuerpo recupere.</div>}
+      {routine&&<>
+        {total>=expected&&<div className="complete-banner"><div style={{fontSize:28}}>🔥</div><div><div className="complete-title">Sesion completada</div><div className="complete-sub">{total} series · Buen trabajo</div></div></div>}
+        {routine.exercises.map(ex=><ExCard key={ex.id} exercise={ex} sessionSets={todayLog[ex.id]} onUpdate={s=>upd(ex.id,s)} logs={logs}/>)}
+      </>}
+      <div style={{height:16}}/>
+    </div>
+  );
+}
+
+function RoutinesScreen({routines,onSave,toast}) {
+  const WK=["Lunes","Martes","Miércoles","Jueves","Viernes","Sábado","Domingo"];
+  const GR=["Pecho","Espalda","Hombro","Bíceps","Tríceps","Cuádriceps","Isquiotibiales","Glúteos","Gemelos","Core","Brazos","Hombro Post."];
+  const [sel,setSel]=useState(routines[0]?.id);
+  const [modal,setModal]=useState(null);
+  const [nm,setNm]=useState("");
+  const [nx,setNx]=useState({name:"",sets:"4",reps:"8",muscleGroup:""});
+  const routine=routines.find(r=>r.id===sel);
+  const addR=()=>{ if(!nm.trim()) return; const r={id:"r"+Date.now(),name:nm,days:[],exercises:[]}; onSave([...routines,r]); setSel(r.id); setModal(null); setNm(""); toast("Rutina creada"); };
+  const togDay=d=>{ const r=routines.find(x=>x.id===sel); const days=r.days.includes(d)?r.days.filter(x=>x!==d):[...r.days,d]; onSave(routines.map(x=>x.id===sel?{...x,days}:x)); };
+  const addEx=()=>{ if(!nx.name.trim()) return; const ex={id:"e"+Date.now(),name:nx.name,sets:parseInt(nx.sets)||3,reps:parseInt(nx.reps)||10,muscleGroup:nx.muscleGroup}; onSave(routines.map(r=>r.id===sel?{...r,exercises:[...r.exercises,ex]}:r)); setModal(null); setNx({name:"",sets:"4",reps:"8",muscleGroup:""}); toast("Ejercicio añadido"); };
+  const delEx=id=>onSave(routines.map(r=>r.id===sel?{...r,exercises:r.exercises.filter(e=>e.id!==id)}:r));
+  return (
+    <div>
+      <div className="header">
+        <div><div className="header-title">Rutinas</div><div className="header-sub">{routines.length} bloques</div></div>
+        <button className="btn btn-icon" onClick={()=>setModal("add-r")} style={{display:"flex",alignItems:"center",justifyContent:"center"}}><IcoPlus/></button>
+      </div>
+      <div className="day-tab-row">{routines.map(r=><button key={r.id} className={"day-tab"+(sel===r.id?" day-tab-active":"")} onClick={()=>setSel(r.id)}>{r.name.split("—")[0].trim()}</button>)}</div>
+      {routine&&<>
+        <div className="section-label">Dias asignados</div>
+        <div className="pill-row">{WK.map(d=><button key={d} className={"pill"+(routine.days.includes(d)?" pill-active":"")} onClick={()=>togDay(d)}>{d.slice(0,3)}</button>)}</div>
+        <div className="section-label">Ejercicios · {routine.exercises.length}</div>
+        <div className="card">
+          {routine.exercises.length===0&&<div className="empty" style={{padding:24}}>Sin ejercicios</div>}
+          {routine.exercises.map((ex,i)=>(
+            <div key={ex.id} className="ex-row" style={i===0?{borderTop:"none"}:{}}>
+              <div><div className="ex-name">{ex.name}</div><div className="ex-meta">{ex.muscleGroup} · {ex.sets}x{ex.reps}</div></div>
+              <button className="btn btn-icon btn-danger" onClick={()=>delEx(ex.id)} style={{display:"flex",alignItems:"center",justifyContent:"center"}}><IcoTrash/></button>
+            </div>
+          ))}
+        </div>
+        <div style={{padding:"0 16px 16px"}}><button className="btn btn-ghost" style={{width:"100%"}} onClick={()=>setModal("add-ex")}>+ Añadir ejercicio</button></div>
+      </>}
+      {!routine&&<div className="empty"><div className="empty-icon">💪</div><div className="empty-title">Sin rutinas</div>Crea tu primera pulsando el +</div>}
+      {modal==="add-r"&&<div className="overlay" onClick={()=>setModal(null)}><div className="modal" onClick={e=>e.stopPropagation()}><div className="modal-handle"/><div className="modal-title">Nueva rutina</div><input className="input-field" placeholder="ej: Push — Empuje" value={nm} onChange={e=>setNm(e.target.value)} autoFocus/><button className="btn btn-primary" onClick={addR}>Crear</button></div></div>}
+      {modal==="add-ex"&&<div className="overlay" onClick={()=>setModal(null)}><div className="modal" onClick={e=>e.stopPropagation()}><div className="modal-handle"/><div className="modal-title">Nuevo ejercicio</div><input className="input-field" placeholder="Nombre" value={nx.name} onChange={e=>setNx({...nx,name:e.target.value})} autoFocus/><div style={{display:"flex",gap:8,marginBottom:10}}><input className="input-field" style={{marginBottom:0,flex:1}} placeholder="Series" type="number" value={nx.sets} onChange={e=>setNx({...nx,sets:e.target.value})}/><input className="input-field" style={{marginBottom:0,flex:1}} placeholder="Reps" type="number" value={nx.reps} onChange={e=>setNx({...nx,reps:e.target.value})}/></div><div className="pill-row" style={{padding:"0 0 12px"}}>{GR.map(g=><button key={g} className={"pill"+(nx.muscleGroup===g?" pill-active":"")} onClick={()=>setNx({...nx,muscleGroup:g})}>{g}</button>)}</div><button className="btn btn-primary" onClick={addEx}>Añadir</button></div></div>}
+    </div>
+  );
+}
+
+function StatsScreen({routines,logs,swimLogs}) {
+  const all=routines.flatMap(r=>r.exercises);
+  const [sel,setSel]=useState(all[0]?.id);
+  const [view,setView]=useState("gym");
+  const ex=all.find(e=>e.id===sel);
+  const hist=ex?getHistory(logs,ex.id):[];
+  const best=ex?getBest(logs,ex.id):null;
+  const maxKg=hist.length?Math.max(...hist.map(d=>d.kg)):0;
+  const totalS=Object.keys(logs).length;
+  const totalSets=Object.values(logs).reduce((a,s)=>a+Object.values(s).reduce((b,sets)=>b+sets.length,0),0);
+  const swimDates=Object.keys(swimLogs).sort();
+  const totalSwimDist=Object.values(swimLogs).reduce((a,b)=>a+b*BOYA_M*2,0);
+  const maxBoyas=swimDates.length?Math.max(...swimDates.map(d=>swimLogs[d])):0;
+  return (
+    <div>
+      <div className="header"><div><div className="header-title">Progreso</div><div className="header-sub">Tu historial</div></div></div>
+      <div style={{display:"flex",gap:8,padding:"0 16px 16px"}}>
+        <button className={"day-tab"+(view==="gym"?" day-tab-active":"")} onClick={()=>setView("gym")}>Gym</button>
+        <button className={"day-tab"+(view==="swim"?" day-tab-active":"")} style={view==="swim"?{background:"#5BB8FF",color:"#0F0F0F",borderColor:"#5BB8FF"}:{}} onClick={()=>setView("swim")}>Natacion 🏊</button>
+      </div>
+      {view==="gym"&&<>
+        <div className="stat-grid">
+          <div className="stat-box"><div className="stat-val">{totalS}</div><div className="stat-label">Sesiones</div></div>
+          <div className="stat-box"><div className="stat-val">{totalSets}</div><div className="stat-label">Series totales</div></div>
+        </div>
+        <div className="section-label">Progreso por ejercicio</div>
+        <div className="day-tab-row">{all.map(e=><button key={e.id} className={"day-tab"+(sel===e.id?" day-tab-active":"")} onClick={()=>setSel(e.id)}>{e.name.split(" ")[0]}</button>)}</div>
+        {ex&&<div className="card" style={{margin:"0 16px 12px"}}>
+          <div className="card-header">
+            <div><div className="card-title">{ex.name}</div><div className="ex-meta">{ex.muscleGroup}</div></div>
+            {best&&<div style={{textAlign:"right"}}><div className="ex-best">{best.kg}<span style={{fontSize:12,color:"#777"}}> kg</span></div><div className="ex-best-label">record · {best.reps} reps</div></div>}
+          </div>
+          {hist.length>1?<div className="chart-wrap"><div className="chart-bar-row">{hist.map((d,i)=><div key={i} className="chart-bar-col"><div style={{flex:1,display:"flex",alignItems:"flex-end",width:"100%"}}><div className={"chart-bar"+(d.kg===maxKg?" chart-bar-peak":"")} style={{height:(d.kg/maxKg*100)+"%"}}/></div><div className="chart-date">{d.date.slice(5)}</div></div>)}</div></div>:<div className="empty" style={{padding:20}}><div style={{fontSize:12}}>Registra 2+ sesiones para ver la grafica</div></div>}
+        </div>}
+        {totalS===0&&<div className="empty"><div className="empty-icon">📈</div><div className="empty-title">Aqui veras tu progreso</div>Completa tu primera sesion.</div>}
+      </>}
+      {view==="swim"&&<>
+        <div className="stat-grid">
+          <div className="stat-box"><div className="stat-val" style={{color:"#5BB8FF"}}>{swimDates.length}</div><div className="stat-label">Sesiones mar</div></div>
+          <div className="stat-box"><div className="stat-val" style={{color:"#5BB8FF"}}>{totalSwimDist>=1000?(totalSwimDist/1000).toFixed(1)+"km":totalSwimDist+"m"}</div><div className="stat-label">Total nadado</div></div>
+        </div>
+        {swimDates.length>1&&<>
+          <div className="section-label">Boyas por sesion</div>
+          <div className="card" style={{margin:"0 16px 12px"}}>
+            <div style={{padding:"16px 16px 4px"}}>
+              <div className="chart-bar-row">
+                {swimDates.slice(-8).map((d,i)=>(
+                  <div key={i} className="chart-bar-col">
+                    <div style={{flex:1,display:"flex",alignItems:"flex-end",width:"100%"}}>
+                      <div className={"chart-bar"+(swimLogs[d]===maxBoyas?" chart-bar-swim":"")} style={{height:(swimLogs[d]/maxBoyas*100)+"%"}}/>
+                    </div>
+                    <div className="chart-date">{d.slice(5)}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div style={{padding:"0 16px 16px",display:"flex",justifyContent:"space-between"}}>
+              <span style={{fontSize:12,color:"#777"}}>Record: <span style={{color:"#5BB8FF",fontFamily:"'Space Mono',monospace",fontWeight:700}}>{maxBoyas} boyas</span></span>
+              <span style={{fontSize:12,color:"#777"}}>{maxBoyas*BOYA_M*2}m</span>
+            </div>
+          </div>
+        </>}
+        {swimDates.length===0&&<div className="empty"><div className="empty-icon">🏊</div><div className="empty-title">Sin sesiones de mar aun</div>Registra tus boyas los lunes y miercoles.</div>}
+      </>}
+    </div>
+  );
+}
+
+function App() {
+  const [tab,setTab]=useState("today");
+  const [routines,setRoutines]=useLS("gt_r3",DEFAULT_ROUTINES);
+  const [logs,setLogs]=useLS("gt_l3",{});
+  const [swimLogs,setSwimLogs]=useLS("gt_swim",{});
+  const [toast,setToast]=useState(null);
+  const t=useRef(null);
+  const showToast=m=>{setToast(m);clearTimeout(t.current);t.current=setTimeout(()=>setToast(null),2000);};
+  return (
+    <div className="app">
+      {toast&&<div className="toast">{toast}</div>}
+      <div className="screen">
+        {tab==="today"&&<TodayScreen routines={routines} logs={logs} onLogUpdate={setLogs} swimLogs={swimLogs} onSwimLog={setSwimLogs}/>}
+        {tab==="routines"&&<RoutinesScreen routines={routines} onSave={setRoutines} toast={showToast}/>}
+        {tab==="stats"&&<StatsScreen routines={routines} logs={logs} swimLogs={swimLogs}/>}
+      </div>
+      <nav className="nav">
+        {[{id:"today",label:"Hoy",I:IcoToday},{id:"routines",label:"Rutinas",I:IcoRut},{id:"stats",label:"Progreso",I:IcoStats}].map(({id,label,I})=>(
+          <button key={id} className={"nav-btn"+(tab===id?" active":"")} onClick={()=>setTab(id)}><I/>{label}</button>
+        ))}
+      </nav>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>
